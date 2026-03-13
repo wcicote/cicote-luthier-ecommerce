@@ -3,9 +3,10 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trash2, ArrowLeft, ShoppingCart } from 'lucide-react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 
 export default function Cart() {
+  const [, setLocation] = useLocation();
   const cartItems = [
     {
       id: 1,
@@ -98,7 +99,11 @@ export default function Cart() {
                     <span className="text-2xl font-bold text-primary">R$ {total.toFixed(2)}</span>
                   </div>
 
-                  <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mb-3">
+                  <Button 
+                    onClick={() => setLocation('/checkout')}
+                    size="lg" 
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mb-3"
+                  >
                     Prosseguir para Checkout
                   </Button>
 

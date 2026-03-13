@@ -13,6 +13,9 @@ import ProductsPage from "./pages/admin/Products";
 import InventoryPage from "./pages/admin/Inventory";
 import PromotionsPage from "./pages/admin/Promotions";
 import SettingsPage from "./pages/admin/Settings";
+import CheckoutPage from "./pages/Checkout";
+import OrderConfirmationPage from "./pages/OrderConfirmation";
+import OrdersPage from "./pages/Orders";
 
 function Router() {
   return (
@@ -21,6 +24,9 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/product/:id"} component={ProductDetail} />
       <Route path={"/cart"} component={Cart} />
+      <Route path={"/checkout"} component={CheckoutPage} />
+      <Route path={"/order-confirmation"} component={OrderConfirmationPage} />
+      <Route path={"/orders"} component={OrdersPage} />
       <Route path={"/contact"} component={Contact} />
       
       {/* Admin Routes */}
