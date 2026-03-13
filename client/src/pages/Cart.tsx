@@ -2,11 +2,22 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Trash2, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { Trash2, ArrowLeft, ShoppingCart, Truck, Clock, MapPin } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
+import { useState } from 'react';
 
 export default function Cart() {
   const [, setLocation] = useLocation();
+  const [selectedShipping, setSelectedShipping] = useState('super-frete');
+  const [cep, setCep] = useState('');
+  
+  const shippingOptions = [
+    { id: 'super-frete', name: 'Super Frete', price: 29.90, days: '2-3 dias', icon: Truck },
+    { id: 'sedex', name: 'SEDEX', price: 49.90, days: '1-2 dias', icon: Clock },
+    { id: 'pac', name: 'PAC', price: 14.90, days: '5-8 dias', icon: MapPin },
+    { id: 'retirada', name: 'Retirada na Loja', price: 0, days: 'Imediato', icon: MapPin }
+  ];
+  
   const cartItems = [
     {
       id: 1,
@@ -18,7 +29,8 @@ export default function Cart() {
   ];
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = 50.00;
+  const currentShipping = shippingOptions.find(s => s.id === selectedShipping);
+  const shipping = currentShipping?.price || 0;
   const total = subtotal + shipping;
 
   return (
@@ -76,6 +88,59 @@ export default function Cart() {
                 ))}
               </div>
 
+              {/* Shipping Options */}
+              <div className="lg:col-span-2">
+                <Card className="p-6 mb-8">
+                  <h2 className="font-display font-semibold text-xl text-foreground mb-4">
+                    Opções de Frete
+                  </h2>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-foreground mb-2">CEP de Entrega</label>
+                    <input
+                      type="text"
+                      value={cep}
+                      onChange={(e) => setCep(e.target.value.replace(/\D/g, ''))}
+                      placeholder="00000-000"
+                      maxLength={8}
+                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {shippingOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <label key={option.id} className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedShipping === option.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value={option.id}
+                            checked={selectedShipping === option.id}
+                            onChange={() => setSelectedShipping(option.id)}
+                            className="w-4 h-4 mt-1"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="w-4 h-4 text-primary" />
+                              <span className="font-semibold text-foreground">{option.name}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{option.days}</p>
+                            <p className="text-sm font-bold text-primary mt-1">
+                              {option.price > 0 ? `R$ ${option.price.toFixed(2)}` : 'Grátis'}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </Card>
+              </div>
+
               {/* Order Summary */}
               <div className="lg:col-span-1">
                 <Card className="p-6 sticky top-20">
@@ -89,7 +154,7 @@ export default function Cart() {
                       <span className="text-foreground font-semibold">R$ {subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Frete</span>
+                      <span className="text-muted-foreground">Frete ({currentShipping?.name})</span>
                       <span className="text-foreground font-semibold">R$ {shipping.toFixed(2)}</span>
                     </div>
                   </div>

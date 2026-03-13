@@ -24,6 +24,7 @@ interface CartItem {
 export default function CheckoutPage() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState<'cart' | 'shipping' | 'payment' | 'review'>('cart');
+  const [selectedShipping, setSelectedShipping] = useState('super-frete');
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     firstName: '',
@@ -37,6 +38,13 @@ export default function CheckoutPage() {
     cardExpiry: '',
     cardCVC: ''
   });
+  
+  const shippingOptions = [
+    { id: 'super-frete', name: 'Super Frete', price: 29.90, days: '2-3 dias úteis' },
+    { id: 'sedex', name: 'SEDEX', price: 49.90, days: '1-2 dias úteis' },
+    { id: 'pac', name: 'PAC', price: 14.90, days: '5-8 dias úteis' },
+    { id: 'retirada', name: 'Retirada na Loja', price: 0, days: 'Imediato' }
+  ];
 
   // Mock cart items
   const cartItems: CartItem[] = [
@@ -57,7 +65,8 @@ export default function CheckoutPage() {
   ];
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 200 ? 0 : 25.00;
+  const currentShipping = shippingOptions.find(s => s.id === selectedShipping);
+  const shipping = currentShipping?.price || 0;
   const tax = subtotal * 0.15;
   const total = subtotal + shipping + tax;
 
@@ -286,6 +295,38 @@ export default function CheckoutPage() {
                       className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="01310-100"
                     />
+                  </div>
+                </div>
+
+                {/* Shipping Options */}
+                <div className="mt-8 pt-8 border-t border-border">
+                  <h3 className="font-display font-semibold text-lg text-foreground mb-4">
+                    Opcoes de Frete
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {shippingOptions.map((option) => (
+                      <label key={option.id} className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedShipping === option.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="shipping"
+                          value={option.id}
+                          checked={selectedShipping === option.id}
+                          onChange={() => setSelectedShipping(option.id)}
+                          className="w-4 h-4 mt-1"
+                        />
+                        <div className="flex-1">
+                          <span className="font-semibold text-foreground">{option.name}</span>
+                          <p className="text-xs text-muted-foreground">{option.days}</p>
+                          <p className="text-sm font-bold text-primary mt-1">
+                            {option.price > 0 ? `R$ ${option.price.toFixed(2)}` : 'Gratis'}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
                   </div>
                 </div>
 

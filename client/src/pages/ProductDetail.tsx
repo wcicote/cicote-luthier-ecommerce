@@ -4,12 +4,21 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Star, Truck, Shield, RotateCcw, ChevronLeft } from 'lucide-react';
+import { Star, Truck, Shield, RotateCcw, ChevronLeft, Clock, MapPin } from 'lucide-react';
 import { Link } from 'wouter';
 
 export default function ProductDetail() {
   const [, params] = useRoute('/product/:id');
   const [quantity, setQuantity] = useState(1);
+  const [selectedShipping, setSelectedShipping] = useState('super-frete');
+  const [cep, setCep] = useState('');
+  
+  const shippingOptions = [
+    { id: 'super-frete', name: 'Super Frete', price: 29.90, days: '2-3 dias uteis', icon: Truck },
+    { id: 'sedex', name: 'SEDEX', price: 49.90, days: '1-2 dias uteis', icon: Clock },
+    { id: 'pac', name: 'PAC', price: 14.90, days: '5-8 dias uteis', icon: MapPin },
+    { id: 'retirada', name: 'Retirada na Loja', price: 0, days: 'Imediato', icon: MapPin }
+  ];
 
   // Sample product data
   const product = {
@@ -169,6 +178,54 @@ export default function ProductDetail() {
                 <Button size="lg" variant="outline" className="w-full border-primary text-primary hover:bg-primary/5">
                   Solicitar Informações
                 </Button>
+
+                {/* Shipping Options */}
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h3 className="font-display font-semibold text-lg text-foreground mb-3">
+                    Opcoes de Frete
+                  </h3>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-foreground mb-2">CEP de Entrega</label>
+                    <input
+                      type="text"
+                      value={cep}
+                      onChange={(e) => setCep(e.target.value.replace(/\D/g, ''))}
+                      placeholder="00000-000"
+                      maxLength={8}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {shippingOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      return (
+                        <label key={option.id} className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedShipping === option.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value={option.id}
+                            checked={selectedShipping === option.id}
+                            onChange={() => setSelectedShipping(option.id)}
+                            className="w-4 h-4 mt-1"
+                          />
+                          <div className="flex-1 flex items-center justify-between">
+                            <div>
+                              <span className="font-semibold text-foreground text-sm">{option.name}</span>
+                              <p className="text-xs text-muted-foreground">{option.days}</p>
+                            </div>
+                            <p className="text-sm font-bold text-primary">
+                              {option.price > 0 ? `R$ ${option.price.toFixed(2)}` : 'Gratis'}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Info Cards */}
                 <div className="grid grid-cols-2 gap-3 pt-4">
