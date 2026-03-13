@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Menu, X, ShoppingCart, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
@@ -41,6 +43,18 @@ export default function Header() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2 md:gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 hover:bg-secondary rounded-md transition-colors"
+              title={`Alternar para tema ${theme === 'light' ? 'escuro' : 'claro'}`}
+            >
+              {theme === 'light' ? (
+                <Moon className="w-5 h-5 text-foreground" />
+              ) : (
+                <Sun className="w-5 h-5 text-foreground" />
+              )}
+            </button>
+
             <Link href="/cart">
               <a className="relative p-2 hover:bg-secondary rounded-md transition-colors">
                 <ShoppingCart className="w-5 h-5 text-foreground" />

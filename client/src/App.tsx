@@ -16,6 +16,8 @@ import SettingsPage from "./pages/admin/Settings";
 import CheckoutPage from "./pages/Checkout";
 import OrderConfirmationPage from "./pages/OrderConfirmation";
 import OrdersPage from "./pages/Orders";
+import LoginPage from "./pages/Login";
+import ShippingPage from "./pages/Shipping";
 
 function Router() {
   return (
@@ -28,6 +30,8 @@ function Router() {
       <Route path={"/order-confirmation"} component={OrderConfirmationPage} />
       <Route path={"/orders"} component={OrdersPage} />
       <Route path={"/contact"} component={Contact} />
+      <Route path={"/login"} component={LoginPage} />
+      <Route path={"/shipping"} component={ShippingPage} />
       
       {/* Admin Routes */}
       <Route path={"/admin"} component={AdminDashboard} />
@@ -57,7 +61,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider
         defaultTheme="light"
-        // switchable
+        switchable
       >
         <TooltipProvider>
           <Toaster />
