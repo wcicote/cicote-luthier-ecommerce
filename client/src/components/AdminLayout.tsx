@@ -14,8 +14,8 @@ export default function AdminLayout({ children, title, subtitle }: AdminLayoutPr
       <AdminSidebar />
 
       {/* Top Bar */}
-      <header className="fixed top-0 right-0 left-0 md:left-64 h-16 bg-card border-b border-border flex items-center justify-between px-6 z-20">
-        <div className="flex-1 max-w-md">
+      <header className="fixed top-0 right-0 left-0 md:left-64 h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 z-20">
+        <div className="flex-1 max-w-md hidden md:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -26,7 +26,7 @@ export default function AdminLayout({ children, title, subtitle }: AdminLayoutPr
           </div>
         </div>
 
-        <div className="flex items-center gap-4 ml-6">
+        <div className="flex items-center gap-2 md:gap-4 ml-auto">
           <button className="relative p-2 hover:bg-secondary rounded-lg transition-colors">
             <Bell className="w-5 h-5 text-foreground" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
@@ -39,13 +39,13 @@ export default function AdminLayout({ children, title, subtitle }: AdminLayoutPr
       </header>
 
       {/* Main Content */}
-      <main className="md:ml-64 mt-16 p-6">
+      <main className="md:ml-64 mt-16 p-4 md:p-6">
         <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-muted-foreground">{subtitle}</p>
+            <p className="text-sm md:text-base text-muted-foreground">{subtitle}</p>
           )}
         </div>
 

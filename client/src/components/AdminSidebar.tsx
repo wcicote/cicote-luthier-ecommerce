@@ -61,6 +61,14 @@ export default function AdminSidebar() {
 
   return (
     <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-20"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       {/* Mobile Toggle */}
       <button
         className="md:hidden fixed top-4 left-4 z-40 p-2 bg-primary text-primary-foreground rounded-lg"
@@ -72,8 +80,8 @@ export default function AdminSidebar() {
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 z-30 ${
-          isOpen ? 'w-64' : 'w-20'
-        } md:w-64`}
+          isOpen ? 'w-64' : '-translate-x-full'
+        } md:translate-x-0 md:w-64`}
       >
         {/* Header */}
         <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
@@ -168,7 +176,7 @@ export default function AdminSidebar() {
       </aside>
 
       {/* Main Content Offset */}
-      <div className={`transition-all duration-300 ${isOpen ? 'md:ml-64' : 'md:ml-20'} ml-0`}>
+      <div className={`transition-all duration-300 md:ml-64 ml-0`}>
         {/* Content will go here */}
       </div>
     </>

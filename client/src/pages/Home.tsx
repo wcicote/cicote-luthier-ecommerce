@@ -78,17 +78,17 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-center min-h-[600px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-center min-h-[500px] md:min-h-[600px]">
           {/* Left: Text Content */}
-          <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center bg-background">
+          <div className="p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center bg-background">
             <div className="max-w-lg">
-              <p className="text-primary font-display font-semibold text-sm tracking-widest uppercase mb-4">
+              <p className="text-primary font-display font-semibold text-xs sm:text-sm tracking-widest uppercase mb-3 sm:mb-4">
                 Artesanato Tradicional
               </p>
-              <h1 className="font-display text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 sm:mb-6 leading-tight">
                 Banjos Artesanais de Excelência
               </h1>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed">
                 Cada instrumento é cuidadosamente fabricado à mão, combinando tradição musical com técnica contemporânea. Acessórios premium para músicos profissionais.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -152,22 +152,22 @@ export default function Home() {
       </section>
 
       {/* Products Section */}
-      <section id="products" className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-primary font-display font-semibold text-sm tracking-widest uppercase mb-4">
+      <section id="products" className="py-12 md:py-16 lg:py-24 bg-background">
+        <div className="w-full px-4 md:px-6 max-w-7xl mx-auto">
+          <div className="text-center mb-8 md:mb-12">
+            <p className="text-primary font-display font-semibold text-xs sm:text-sm tracking-widest uppercase mb-2 sm:mb-4">
               Catálogo
             </p>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4">
               Produtos em Destaque
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
               Acessórios premium e banjos artesanais sob encomenda
             </p>
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 md:mb-12">
             <button
               onClick={() => setSelectedCategory('all')}
               className={`px-6 py-2 rounded-full font-medium transition-all ${
@@ -201,36 +201,36 @@ export default function Home() {
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {filteredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-                <div className="relative h-64 overflow-hidden bg-secondary">
+                <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-secondary">
                   <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {product.featured && (
-                    <div className="absolute top-4 right-4 bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-semibold">
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-accent text-accent-foreground px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
                       Destaque
                     </div>
                   )}
                 </div>
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
                     {product.category === 'accessories' ? 'Acessório' : 'Banjo'}
                   </p>
-                  <h3 className="font-display font-semibold text-lg text-foreground mb-2">
+                  <h3 className="font-display font-semibold text-base sm:text-lg text-foreground mb-2">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                     {product.description}
                   </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-primary">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xl sm:text-2xl font-bold text-primary">
                       R$ {product.price.toFixed(2)}
                     </span>
-                    <Button size="sm" className="bg-primary hover:bg-primary/90">
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs sm:text-sm">
                       Adicionar
                     </Button>
                   </div>

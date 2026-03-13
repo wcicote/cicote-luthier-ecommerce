@@ -8,8 +8,8 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+      <div className="w-full px-4 md:px-6 py-3 md:py-4">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
           {/* Logo */}
           <Link href="/">
             <a className="flex items-center gap-2 no-underline">
@@ -40,7 +40,7 @@ export default function Header() {
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Link href="/cart">
               <a className="relative p-2 hover:bg-secondary rounded-md transition-colors">
                 <ShoppingCart className="w-5 h-5 text-foreground" />
@@ -64,7 +64,7 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <nav className="md:hidden mt-4 pb-4 border-t border-border pt-4 space-y-3">
+          <nav className="md:hidden mt-3 pb-3 border-t border-border pt-3 space-y-2">
             <Link href="/#products">
               <a className="block text-foreground hover:text-primary transition-colors font-medium">Produtos</a>
             </Link>
