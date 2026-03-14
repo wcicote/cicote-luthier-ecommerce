@@ -1,17 +1,25 @@
 import { useState } from 'react';
+import { useAuth } from "@/_core/hooks/useAuth";
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Star, Zap, Award, Leaf } from 'lucide-react';
-
-// Import icons
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { ArrowRight, Star, Zap, Award, Leaf, Mail, Phone, MapPin } from 'lucide-react';
+import { useProducts, useCategories } from '@/hooks/useProducts';
+import { useCart } from '@/hooks/useCart';
+import { useLocation } from 'wouter';
 
 export default function Home() {
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [, navigate] = useLocation();
+  
+  const { products: apiProducts = [], isLoading: productsLoading } = useProducts(50);
+  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { addItem } = useCart();
 
-  const products = [
+  // Fallback products se API não retornar dados
+  const products = apiProducts.length > 0 ? apiProducts : [
     {
       id: 1,
       name: 'Cordas Premium Nylon',
@@ -70,7 +78,7 @@ export default function Home() {
 
   const filteredProducts = selectedCategory === 'all' 
     ? products 
-    : products.filter(p => p.category === selectedCategory);
+    : products.filter((p: any) => p.categoryId === parseInt(selectedCategory) || selectedCategory === 'all');
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -206,8 +214,8 @@ export default function Home() {
               <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
                 <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-secondary">
                   <img
-                    src={product.image}
-                    alt={product.name}
+                    src={product.image || ''}
+                    alt={product.name || ''}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   {product.featured && (
@@ -218,7 +226,7 @@ export default function Home() {
                 </div>
                 <div className="p-4 sm:p-6">
                   <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
-                    {product.category === 'accessories' ? 'Acessório' : 'Banjo'}
+                    {(product as any).category === 'accessories' || (product as any).isCustomOrder === 0 ? 'Acessório' : 'Banjo'}
                   </p>
                   <h3 className="font-display font-semibold text-base sm:text-lg text-foreground mb-2">
                     {product.name}
@@ -228,12 +236,18 @@ export default function Home() {
                   </p>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xl sm:text-2xl font-bold text-primary">
-                      R$ {product.price.toFixed(2)}
+                      R$ {typeof product.price === 'string' ? parseFloat(product.price).toFixed(2) : (product.price as number).toFixed(2)}
                     </span>
-                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-xs sm:text-sm">
+                    <Button 
+                      size="sm" 
+                      className="bg-primary hover:bg-primary/90 text-xs sm:text-sm"
+                      onClick={() => {
+                        addItem(product.id, 1);
+                      }}
+                    >
                       Adicionar
                     </Button>
-                  </div>
+                    </div>
                 </div>
               </Card>
             ))}

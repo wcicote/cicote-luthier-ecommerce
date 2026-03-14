@@ -18,8 +18,8 @@ import OrderConfirmationPage from "./pages/OrderConfirmation";
 import OrdersPage from "./pages/Orders";
 import LoginPage from "./pages/Login";
 import ShippingPage from "./pages/Shipping";
-
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       {/* Public Routes */}
