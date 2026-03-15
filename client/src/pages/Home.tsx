@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { ArrowRight, Star, Zap, Award, Leaf, Mail, Phone, MapPin } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -100,13 +100,19 @@ export default function Home() {
                 Cada instrumento é cuidadosamente fabricado à mão, combinando tradição musical com técnica contemporânea. Acessórios premium para músicos profissionais.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button 
+                  size="lg" 
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
+                >
                   Explorar Produtos
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/5">
-                  Solicitar Encomenda
-                </Button>
+                <Link href="/contact">
+                  <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/5 w-full sm:w-auto">
+                    Solicitar Encomenda
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -212,25 +218,29 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {filteredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-                <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-secondary">
-                  <img
-                    src={product.image || ''}
-                    alt={product.name || ''}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                <Link href={`/product/${product.id}`}>
+                  <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-secondary cursor-pointer">
+                    <img
+                      src={product.image || ''}
+                      alt={product.name || ''}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   {product.featured && (
                     <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-accent text-accent-foreground px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
                       Destaque
                     </div>
                   )}
                 </div>
-                <div className="p-4 sm:p-6">
+              </Link>
+              <div className="p-4 sm:p-6">
                   <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
                     {(product as any).category === 'accessories' || (product as any).isCustomOrder === 0 ? 'Acessório' : 'Banjo'}
                   </p>
-                  <h3 className="font-display font-semibold text-base sm:text-lg text-foreground mb-2">
-                    {product.name}
-                  </h3>
+                    <Link href={`/product/${product.id}`}>
+                      <h3 className="font-display font-semibold text-base sm:text-lg text-foreground mb-2 cursor-pointer hover:text-primary transition-colors">
+                        {product.name}
+                      </h3>
+                    </Link>
                   <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                     {product.description}
                   </p>
@@ -307,10 +317,12 @@ export default function Home() {
                 </li>
               </ul>
 
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                Solicitar Orçamento
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <Link href="/contact">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  Solicitar Orçamento
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -346,10 +358,17 @@ export default function Home() {
             Entre em contato conosco para explorar nossas opções de produtos ou solicitar um banjo personalizado.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-primary-foreground hover:bg-primary-foreground/90 text-primary">
-              Entrar em Contato
-            </Button>
-            <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10">
+            <Link href="/contact">
+              <Button size="lg" className="bg-primary-foreground hover:bg-primary-foreground/90 text-primary w-full sm:w-auto">
+                Entrar em Contato
+              </Button>
+            </Link>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Ver Catálogo Completo
             </Button>
           </div>

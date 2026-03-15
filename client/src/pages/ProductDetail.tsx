@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { useRoute } from 'wouter';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Star, Truck, Shield, RotateCcw, ChevronLeft, Clock, MapPin } from 'lucide-react';
-import { Link } from 'wouter';
+import { Link, useRoute } from 'wouter';
+import { useCart } from '@/hooks/useCart';
+import { toast } from 'sonner';
 
 export default function ProductDetail() {
   const [, params] = useRoute('/product/:id');
   const [quantity, setQuantity] = useState(1);
   const [selectedShipping, setSelectedShipping] = useState('super-frete');
   const [cep, setCep] = useState('');
+  const { addItem } = useCart();
   
   const shippingOptions = [
     { id: 'super-frete', name: 'Super Frete', price: 29.90, days: '2-3 dias uteis', icon: Truck },
@@ -171,13 +173,26 @@ export default function ProductDetail() {
                   </span>
                 </div>
 
-                <Button size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6">
+                <Button 
+                  size="lg" 
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6"
+                  onClick={async () => {
+                    try {
+                      await addItem(parseInt(product.id), quantity);
+                      toast.success(`${product.name} adicionado ao carrinho!`);
+                    } catch (err) {
+                      toast.error("Erro ao adicionar ao carrinho. Verifique se você está logado.");
+                    }
+                  }}
+                >
                   Adicionar ao Carrinho
                 </Button>
 
-                <Button size="lg" variant="outline" className="w-full border-primary text-primary hover:bg-primary/5">
-                  Solicitar Informações
-                </Button>
+                <Link href="/contact">
+                  <Button size="lg" variant="outline" className="w-full border-primary text-primary hover:bg-primary/5">
+                    Solicitar Informações
+                  </Button>
+                </Link>
 
                 {/* Shipping Options */}
                 <div className="mt-6 pt-6 border-t border-border">
@@ -278,16 +293,28 @@ export default function ProductDetail() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[1, 2, 3].map((item) => (
-                <Card key={item} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="h-48 bg-secondary"></div>
+                <Card key={item} className="overflow-hidden hover:shadow-lg transition-shadow group">
+                  <Link href={`/product/${item}`}>
+                    <div className="h-48 bg-secondary cursor-pointer overflow-hidden">
+                      <div className="w-full h-full bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                        <span className="text-primary/20 font-display font-bold text-4xl">PRODUTO</span>
+                      </div>
+                    </div>
+                  </Link>
                   <div className="p-6">
-                    <h3 className="font-display font-semibold text-lg mb-2">Produto Relacionado</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Descrição breve do produto</p>
+                    <Link href={`/product/${item}`}>
+                      <h3 className="font-display font-semibold text-lg mb-2 cursor-pointer hover:text-primary transition-colors">
+                        Produto Relacionado {item}
+                      </h3>
+                    </Link>
+                    <p className="text-sm text-muted-foreground mb-4">Acessório premium para seu instrumento</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xl font-bold text-primary">R$ 299.90</span>
-                      <Button size="sm" className="bg-primary hover:bg-primary/90">
-                        Ver
-                      </Button>
+                      <Link href={`/product/${item}`}>
+                        <Button size="sm" className="bg-primary hover:bg-primary/90">
+                          Ver Detalhes
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </Card>

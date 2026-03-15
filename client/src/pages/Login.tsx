@@ -19,10 +19,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-
-      <main className="flex-1 flex items-center justify-center py-12 px-4">
+      <main className="flex-1 flex items-center justify-center py-12 px-4 space-y-8">
         <div className="w-full max-w-md">
+          {/* Logo Voltar para Home */}
+          <div className="flex justify-center mb-8">
+            <Link href="/">
+              <a className="flex items-center gap-2 no-underline group">
+                <div className="w-12 h-12 bg-primary rounded-sm flex items-center justify-center group-hover:bg-primary/90 transition-colors">
+                  <span className="text-primary-foreground font-display font-bold text-xl">C</span>
+                </div>
+                <div>
+                  <h1 className="font-display font-bold text-2xl text-foreground">Cicote</h1>
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest">Luthier</p>
+                </div>
+              </a>
+            </Link>
+          </div>
           {/* Card Principal */}
           <div className="bg-card border border-border rounded-lg shadow-lg p-8 md:p-10">
             {/* Header */}

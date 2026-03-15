@@ -199,8 +199,7 @@ USING (auth.uid() = usuario_id);
 
 ## 🖥️ FASE 4: UPGRADE DO PROJETO PARA FULL-STACK
 
-### 4.1 Adicionar Feature web-db-user
-- [ ] Executar: `webdev_add_feature("web-db-user")`
+- [ ] Adicionar suporte a Backend/Banco de Dados
 - [ ] Isso adicionará:
   - Backend Node.js/Express
   - Banco de dados PostgreSQL (local)
@@ -437,7 +436,7 @@ USING (auth.uid() = usuario_id);
 
 ### 12.2 Deploy
 - [ ] Fazer deploy do backend (Vercel, Railway, Render)
-- [ ] Fazer deploy do frontend (Manus, Vercel, Netlify)
+- [ ] Fazer deploy do frontend (Vercel, Netlify)
 - [ ] Configurar domínio customizado
 - [ ] Configurar SSL/TLS
 

@@ -5,11 +5,14 @@ import { Card } from '@/components/ui/card';
 import { Trash2, ArrowLeft, ShoppingCart, Truck, Clock, MapPin } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
+import { useCart } from '@/hooks/useCart';
+import { toast } from 'sonner';
 
 export default function Cart() {
   const [, setLocation] = useLocation();
   const [selectedShipping, setSelectedShipping] = useState('super-frete');
   const [cep, setCep] = useState('');
+  const { cartItems, updateItem, removeItem, isLoading } = useCart();
   
   const shippingOptions = [
     { id: 'super-frete', name: 'Super Frete', price: 29.90, days: '2-3 dias', icon: Truck },
@@ -17,18 +20,11 @@ export default function Cart() {
     { id: 'pac', name: 'PAC', price: 14.90, days: '5-8 dias', icon: MapPin },
     { id: 'retirada', name: 'Retirada na Loja', price: 0, days: 'Imediato', icon: MapPin }
   ];
-  
-  const cartItems = [
-    {
-      id: 1,
-      name: 'Cordas Premium Nylon',
-      price: 89.90,
-      quantity: 2,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/accessories-collection-VA8J7JrzAhoFDCr4MERFJi.webp'
-    }
-  ];
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((sum, item: any) => {
+    const price = typeof item.product?.price === 'string' ? parseFloat(item.product.price) : (item.product?.price || 0);
+    return sum + (price * item.quantity);
+  }, 0);
   const currentShipping = shippingOptions.find(s => s.id === selectedShipping);
   const shipping = currentShipping?.price || 0;
   const total = subtotal + shipping;
@@ -56,32 +52,49 @@ export default function Cart() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-4">
-                {cartItems.map((item) => (
-                  <Card key={item.id} className="p-6 flex gap-6">
+                {cartItems.map((item: any) => (
+                  <Card key={item.id} className="p-6 flex gap-6 shadow-sm hover:shadow-md transition-shadow">
                     <div className="w-24 h-24 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={item.product?.image} 
+                        alt={item.product?.name} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <h3 className="font-display font-semibold text-lg text-foreground">
-                          {item.name}
+                          {item.product?.name}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          R$ {item.price.toFixed(2)} cada
+                          R$ {typeof item.product?.price === 'string' ? parseFloat(item.product.price).toFixed(2) : (item.product?.price || 0).toFixed(2)} cada
                         </p>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center border border-border rounded-lg">
-                          <button className="px-3 py-1 text-foreground hover:bg-secondary">−</button>
+                          <button 
+                            onClick={() => updateItem(item.id, Math.max(1, item.quantity - 1))}
+                            className="px-3 py-1 text-foreground hover:bg-secondary transition-colors"
+                          >
+                            −
+                          </button>
                           <span className="px-4 py-1 font-semibold">{item.quantity}</span>
-                          <button className="px-3 py-1 text-foreground hover:bg-secondary">+</button>
+                          <button 
+                            onClick={() => updateItem(item.id, item.quantity + 1)}
+                            className="px-3 py-1 text-foreground hover:bg-secondary transition-colors"
+                          >
+                            +
+                          </button>
                         </div>
                         <span className="text-lg font-bold text-primary">
-                          R$ {(item.price * item.quantity).toFixed(2)}
+                          R$ {( (typeof item.product?.price === 'string' ? parseFloat(item.product.price) : (item.product?.price || 0)) * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     </div>
-                    <button className="text-destructive hover:text-destructive/80 transition-colors">
+                    <button 
+                      onClick={() => removeItem(item.id)}
+                      className="text-destructive hover:text-destructive/80 transition-colors p-2"
+                    >
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </Card>

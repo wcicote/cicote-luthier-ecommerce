@@ -4,9 +4,14 @@ import { Menu, X, ShoppingCart, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/contexts/ThemeContext';
 
+import { useCart } from '@/hooks/useCart';
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { cartItems } = useCart();
+
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
@@ -58,7 +63,11 @@ export default function Header() {
             <Link href="/cart">
               <a className="relative p-2 hover:bg-secondary rounded-md transition-colors">
                 <ShoppingCart className="w-5 h-5 text-foreground" />
-                <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-accent-foreground text-xs rounded-full flex items-center justify-center font-bold">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-accent-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {cartCount}
+                  </span>
+                )}
               </a>
             </Link>
 

@@ -13,16 +13,11 @@ import {
   Package
 } from 'lucide-react';
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
+import { useCart } from '@/hooks/useCart';
 
 export default function CheckoutPage() {
   const [, setLocation] = useLocation();
+  const { cartItems, isLoading: isCartLoading } = useCart();
   const [step, setStep] = useState<'cart' | 'shipping' | 'payment' | 'review'>('cart');
   const [selectedShipping, setSelectedShipping] = useState('super-frete');
   const [formData, setFormData] = useState<Record<string, string>>({
@@ -46,25 +41,10 @@ export default function CheckoutPage() {
     { id: 'retirada', name: 'Retirada na Loja', price: 0, days: 'Imediato' }
   ];
 
-  // Mock cart items
-  const cartItems: CartItem[] = [
-    {
-      id: '1',
-      name: 'Cordas Premium Nylon',
-      price: 89.90,
-      quantity: 2,
-      image: 'https://via.placeholder.com/80'
-    },
-    {
-      id: '2',
-      name: 'Correia de Couro Artesanal',
-      price: 149.90,
-      quantity: 1,
-      image: 'https://via.placeholder.com/80'
-    }
-  ];
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item: any) => {
+    const price = typeof item.product?.price === 'string' ? parseFloat(item.product.price) : (item.product?.price || 0);
+    return sum + (price * item.quantity);
+  }, 0);
   const currentShipping = shippingOptions.find(s => s.id === selectedShipping);
   const shipping = currentShipping?.price || 0;
   const tax = subtotal * 0.15;
@@ -168,14 +148,16 @@ export default function CheckoutPage() {
                   Resumo do Carrinho
                 </h2>
                 <div className="space-y-4 mb-6">
-                  {cartItems.map(item => (
+                  {cartItems.map((item: any) => (
                     <div key={item.id} className="flex gap-4 pb-4 border-b border-border last:border-b-0">
-                      <div className="w-20 h-20 bg-secondary rounded-lg flex-shrink-0" />
+                      <div className="w-20 h-20 bg-secondary rounded-lg flex-shrink-0 overflow-hidden">
+                        <img src={item.product?.image} alt={item.product?.name} className="w-full h-full object-cover" />
+                      </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{item.name}</h3>
+                        <h3 className="font-semibold text-foreground">{item.product?.name}</h3>
                         <p className="text-sm text-muted-foreground">Quantidade: {item.quantity}</p>
                         <p className="text-primary font-semibold mt-2">
-                          R$ {(item.price * item.quantity).toFixed(2)}
+                          R$ {((typeof item.product?.price === 'string' ? parseFloat(item.product.price) : (item.product?.price || 0)) * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -481,11 +463,11 @@ export default function CheckoutPage() {
                   <div>
                     <h3 className="font-semibold text-foreground mb-3">Itens</h3>
                     <div className="space-y-2">
-                      {cartItems.map(item => (
+                      {cartItems.map((item: any) => (
                         <div key={item.id} className="flex justify-between text-sm">
-                          <span className="text-foreground">{item.name} x{item.quantity}</span>
+                          <span className="text-foreground">{item.product?.name} x{item.quantity}</span>
                           <span className="text-foreground font-medium">
-                            R$ {(item.price * item.quantity).toFixed(2)}
+                            R$ {((typeof item.product?.price === 'string' ? parseFloat(item.product.price) : (item.product?.price || 0)) * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       ))}
