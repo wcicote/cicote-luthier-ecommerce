@@ -3,9 +3,11 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Star, Truck, Shield, RotateCcw, ChevronLeft, Clock, MapPin } from 'lucide-react';
+import { Star, Truck, Shield, RotateCcw, ChevronLeft, Clock, MapPin, AlertCircle } from 'lucide-react';
 import { Link, useRoute } from 'wouter';
 import { useCart } from '@/hooks/useCart';
+import { useProduct } from '@/hooks/useProducts';
+import { ProductDetailSkeleton } from '@/components/skeletons/ProductDetailSkeleton';
 import { toast } from 'sonner';
 
 export default function ProductDetail() {
@@ -22,34 +24,49 @@ export default function ProductDetail() {
     { id: 'retirada', name: 'Retirada na Loja', price: 0, days: 'Imediato', icon: MapPin }
   ];
 
-  // Sample product data
+  const { data: rawProduct, isLoading, isError } = useProduct(params?.id);
+  
+  if (isLoading) return <ProductDetailSkeleton />;
+  
+  if (isError || !rawProduct) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-destructive">
+            <AlertCircle className="w-16 h-16 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Produto não encontrado</h2>
+            <p className="mb-6">O produto que você está procurando não existe ou foi removido.</p>
+            <Link href="/">
+              <Button>Voltar para a Loja</Button>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Map Supabase fields to the component expectations
+  // Handles Portuguese/English field names safely
   const product = {
-    id: params?.id || '1',
-    name: 'Banjo Clássico Walnut - Artesanal',
-    price: 2890.00,
-    rating: 4.8,
-    reviews: 24,
-    category: 'Banjos',
-    image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/custom-order-showcase-GBynxkWxfAa5rQEtaDBitT.webp',
-    description: 'Um banjo artesanal de excelência, fabricado sob encomenda com madeira de nogueira selecionada. Cada detalhe é cuidadosamente trabalhado para garantir qualidade sonora e durabilidade.',
-    specifications: {
-      material: 'Madeira de Nogueira Americana',
-      diameter: '11 polegadas',
-      strings: '6 cordas',
-      finish: 'Verniz natural com proteção UV',
-      weight: '2.8 kg',
-      warranty: 'Vitalícia'
+    id: String(rawProduct.id),
+    name: (rawProduct as any).nome ?? (rawProduct as any).name ?? '',
+    price: Number((rawProduct as any).preco ?? (rawProduct as any).price ?? 0),
+    category: (rawProduct as any).categories?.name ?? (rawProduct as any).categories?.nome ?? 'Produto',
+    image: rawProduct.image_url ?? (rawProduct as any).imagens?.[0] ?? '',
+    images: (rawProduct as any).imagens ?? [rawProduct.image_url],
+    description: (rawProduct as any).descricao ?? (rawProduct as any).description ?? '',
+    inStock: ((rawProduct as any).estoque ?? (rawProduct as any).stock ?? 0) > 0,
+    shippingTime: (rawProduct as any).is_custom_order ? `${(rawProduct as any).lead_time ?? 8} semanas (sob encomenda)` : 'Pronta entrega',
+    specifications: (rawProduct as any).especificacoes ?? {
+      garantia: 'Vitalícia',
     },
-    features: [
-      'Madeira de primeira qualidade selecionada manualmente',
-      'Acabamento artesanal com verniz natural',
-      'Hardware de latão polido',
-      'Som rico e profundo',
-      'Fácil de afinar e manter',
-      'Acompanha estojo protetor'
+    features: (rawProduct as any).caracteristicas ?? [
+      'Produto de alta qualidade'
     ],
-    inStock: true,
-    shippingTime: '8-12 semanas (sob encomenda)'
+    rating: 4.8, // Mock as it might not be in the current schema
+    reviews: 24,
   };
 
   return (
@@ -79,17 +96,15 @@ export default function ProductDetail() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex gap-2">
-                <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden cursor-pointer hover:ring-2 ring-primary">
-                  <img src={product.image} alt="Thumbnail" className="w-full h-full object-cover" />
+              {product.images?.length > 1 && (
+                <div className="flex gap-2">
+                  {product.images.map((img: string, i: number) => (
+                    <div key={i} className="w-20 h-20 bg-secondary rounded-lg overflow-hidden cursor-pointer hover:ring-2 ring-primary">
+                      <img src={img} alt={`Thumbnail ${i}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
                 </div>
-                <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden cursor-pointer hover:ring-2 ring-primary">
-                  <img src={product.image} alt="Thumbnail" className="w-full h-full object-cover" />
-                </div>
-                <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden cursor-pointer hover:ring-2 ring-primary">
-                  <img src={product.image} alt="Thumbnail" className="w-full h-full object-cover" />
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Product Info */}
@@ -140,7 +155,7 @@ export default function ProductDetail() {
                 <div className="mb-8">
                   <h3 className="font-display font-semibold text-lg mb-4">Características:</h3>
                   <ul className="space-y-2">
-                    {product.features.map((feature, index) => (
+                    {product.features.map((feature: string, index: number) => (
                       <li key={index} className="flex items-start gap-3">
                         <span className="text-primary font-bold mt-1">✓</span>
                         <span className="text-foreground">{feature}</span>
@@ -178,7 +193,7 @@ export default function ProductDetail() {
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6"
                   onClick={async () => {
                     try {
-                      await addItem(parseInt(product.id), quantity);
+                      await addItem(product.id, quantity);
                       toast.success(`${product.name} adicionado ao carrinho!`);
                     } catch (err) {
                       toast.error("Erro ao adicionar ao carrinho. Verifique se você está logado.");
@@ -280,7 +295,7 @@ export default function ProductDetail() {
                   <span className="text-muted-foreground font-medium capitalize">
                     {key.replace(/([A-Z])/g, ' $1').trim()}:
                   </span>
-                  <span className="text-foreground font-semibold text-right">{value}</span>
+                  <span className="text-foreground font-semibold text-right">{value as React.ReactNode}</span>
                 </div>
               ))}
             </div>

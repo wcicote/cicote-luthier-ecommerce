@@ -7,6 +7,8 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { paymentRoutes, paymentWebhookHandler } from "../routes/payments";
+import { orderRoutes } from "../routes/orders";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,9 +32,20 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Webhook must be parsed as raw body
+  app.post(
+    "/api/payments/webhook",
+    express.raw({ type: "application/json" }),
+    paymentWebhookHandler
+  );
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // REST APIs
+  app.use("/api/payments", paymentRoutes);
+  app.use("/api/orders", orderRoutes);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API

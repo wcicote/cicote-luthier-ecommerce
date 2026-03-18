@@ -1,7 +1,7 @@
 import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
-import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { useLocation } from "wouter";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -11,70 +11,58 @@ type UseAuthOptions = {
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
-  const utils = trpc.useUtils();
-
-  const meQuery = trpc.auth.me.useQuery(undefined, {
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      utils.auth.me.setData(undefined, null);
-    },
-  });
+  
+  const { user, session, loading, isAuthenticated, signOut } = useSupabaseAuth();
+  const [, setLocation] = useLocation();
 
   const logout = useCallback(async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
-        return;
-      }
-      throw error;
-    } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
-    }
-  }, [logoutMutation, utils]);
+    await signOut();
+    setLocation(redirectPath);
+  }, [signOut, setLocation, redirectPath]);
 
   const state = useMemo(() => {
-    return {
-      user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+    if (!user) return { user: null, session: null, loading, isAuthenticated: false };
+    
+    // Map Supabase user to a slightly more convenient format for the frontend
+    const mappedUser = {
+      ...user,
+      name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário',
+      avatar: user.user_metadata?.avatar_url,
     };
-  }, [
-    meQuery.data,
-    meQuery.error,
-    meQuery.isLoading,
-    logoutMutation.error,
-    logoutMutation.isPending,
-  ]);
+
+    return {
+      user: mappedUser,
+      session,
+      loading,
+      isAuthenticated,
+    };
+  }, [user, session, loading, isAuthenticated]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
+    if (loading) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
-    if (window.location.pathname === redirectPath) return;
+    
+    // Convert redirectPath to a relative path for wouter if it's absolute
+    const targetPath = redirectPath.startsWith('http') 
+      ? new URL(redirectPath).pathname 
+      : redirectPath;
 
-    window.location.href = redirectPath
+    if (window.location.pathname === targetPath) return;
+
+    setLocation(targetPath);
   }, [
     redirectOnUnauthenticated,
-    redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
+    redirectPath, // Use redirectPath here, targetPath is derived inside the effect or moved out
+    loading,
     state.user,
+    setLocation
   ]);
 
   return {
     ...state,
-    refresh: () => meQuery.refetch(),
+    refresh: () => {}, // Supabase handles this automatically
     logout,
   };
 }

@@ -201,7 +201,7 @@ class SDKServer {
     cookieValue: string | undefined | null
   ): Promise<{ openId: string; appId: string; name: string } | null> {
     if (!cookieValue) {
-      console.warn("[Auth] Missing session cookie");
+      // Ssssh, we are migrating to Supabase
       return null;
     }
 
@@ -257,7 +257,51 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Regular authentication flow
+    // 1. Try Supabase Bearer token if present
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ") && ENV.supabaseUrl) {
+      const token = authHeader.substring(7);
+      try {
+        const { data: userInfo } = await axios.get(`${ENV.supabaseUrl}/auth/v1/user`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            apikey: ENV.supabaseAnonKey,
+          },
+        });
+
+        if (userInfo && userInfo.id) {
+          const signedInAt = new Date();
+          let user = await db.getUserByOpenId(userInfo.id);
+
+          if (!user) {
+            await db.upsertUser({
+              openId: userInfo.id,
+              name:
+                userInfo.user_metadata?.full_name ||
+                userInfo.user_metadata?.name ||
+                userInfo.email?.split("@")[0] ||
+                "Usuário",
+              email: userInfo.email ?? null,
+              loginMethod: "supabase",
+              lastSignedIn: signedInAt,
+            });
+            user = await db.getUserByOpenId(userInfo.id);
+          }
+
+          if (user) {
+            await db.upsertUser({
+              openId: user.openId,
+              lastSignedIn: signedInAt,
+            });
+            return user;
+          }
+        }
+      } catch (error) {
+        console.warn("[Auth] Supabase token verification failed, falling back to legacy auth");
+      }
+    }
+
+    // 2. Regular legacy authentication flow (cookies)
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
     const session = await this.verifySession(sessionCookie);

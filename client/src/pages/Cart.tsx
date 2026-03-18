@@ -6,6 +6,7 @@ import { Trash2, ArrowLeft, ShoppingCart, Truck, Clock, MapPin } from 'lucide-re
 import { Link, useLocation } from 'wouter';
 import { useState } from 'react';
 import { useCart } from '@/hooks/useCart';
+import { CartItemSkeleton } from '@/components/skeletons/CartItemSkeleton';
 import { toast } from 'sonner';
 
 export default function Cart() {
@@ -21,9 +22,8 @@ export default function Cart() {
     { id: 'retirada', name: 'Retirada na Loja', price: 0, days: 'Imediato', icon: MapPin }
   ];
 
-  const subtotal = cartItems.reduce((sum, item: any) => {
-    const price = typeof item.product?.price === 'string' ? parseFloat(item.product.price) : (item.product?.price || 0);
-    return sum + (price * item.quantity);
+  const subtotal = cartItems.reduce((sum: number, item: any) => {
+    return sum + (item.preco_unitario * item.quantity);
   }, 0);
   const currentShipping = shippingOptions.find(s => s.id === selectedShipping);
   const shipping = currentShipping?.price || 0;
@@ -48,7 +48,17 @@ export default function Cart() {
             Carrinho de Compras
           </h1>
 
-          {cartItems.length > 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-4">
+                <CartItemSkeleton />
+                <CartItemSkeleton />
+              </div>
+              <div className="lg:col-span-1">
+                <Card className="p-6 h-[300px] animate-pulse bg-card" />
+              </div>
+            </div>
+          ) : cartItems.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-4">
@@ -56,7 +66,7 @@ export default function Cart() {
                   <Card key={item.id} className="p-6 flex gap-6 shadow-sm hover:shadow-md transition-shadow">
                     <div className="w-24 h-24 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
                       <img 
-                        src={item.product?.image} 
+                        src={item.product?.image_url || item.product?.imagens?.[0]} 
                         alt={item.product?.name} 
                         className="w-full h-full object-cover" 
                       />
@@ -67,7 +77,7 @@ export default function Cart() {
                           {item.product?.name}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          R$ {typeof item.product?.price === 'string' ? parseFloat(item.product.price).toFixed(2) : (item.product?.price || 0).toFixed(2)} cada
+                          R$ {item.preco_unitario.toFixed(2)} cada
                         </p>
                       </div>
                       <div className="flex items-center justify-between">
@@ -87,7 +97,7 @@ export default function Cart() {
                           </button>
                         </div>
                         <span className="text-lg font-bold text-primary">
-                          R$ {( (typeof item.product?.price === 'string' ? parseFloat(item.product.price) : (item.product?.price || 0)) * item.quantity).toFixed(2)}
+                          R$ {(item.preco_unitario * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     </div>

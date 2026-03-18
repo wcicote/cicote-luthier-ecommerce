@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
+import { supabase } from "@/lib/supabase";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
@@ -18,7 +19,9 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  // We now handle redirects on a per-page basis using useAuth hook 
+  // or specific layout components to avoid unexpected redirects and loops.
+  console.warn("[Auth] Unauthorized TRPC request detected, but global redirect is disabled.");
 };
 
 queryClient.getQueryCache().subscribe(event => {
@@ -42,6 +45,15 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      async headers() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          return {
+            Authorization: `Bearer ${session.access_token}`,
+          };
+        }
+        return {};
+      },
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

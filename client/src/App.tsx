@@ -20,6 +20,7 @@ import OrdersPage from "./pages/Orders";
 import LoginPage from "./pages/Login";
 import ShippingPage from "./pages/Shipping";
 import AuthCallback from "./pages/AuthCallback";
+import ProfilePage from "./pages/Profile";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -30,11 +31,12 @@ function Router() {
       <Route path={"/product/:id"} component={ProductDetail} />
       <Route path={"/cart"} component={Cart} />
       <Route path={"/checkout"} component={CheckoutPage} />
-      <Route path={"/order-confirmation"} component={OrderConfirmationPage} />
+      <Route path={"/order-confirmation/:id"} component={OrderConfirmationPage} />
       <Route path={"/orders"} component={OrdersPage} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/login"} component={LoginPage} />
       <Route path={"/shipping"} component={ShippingPage} />
+      <Route path={"/profile"} component={ProfilePage} />
       
       {/* Auth Callback (OAuth Redirect) */}
       <Route path={"/auth/callback"} component={AuthCallback} />

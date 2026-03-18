@@ -4,81 +4,47 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Star, Zap, Award, Leaf, Mail, Phone, MapPin } from 'lucide-react';
+import { ArrowRight, Star, Zap, Award, Leaf, Mail, Phone, MapPin, AlertCircle } from 'lucide-react';
 import { useProducts, useCategories } from '@/hooks/useProducts';
 import { useCart } from '@/hooks/useCart';
 import { useLocation, Link } from 'wouter';
+import { ProductGridSkeleton } from '@/components/skeletons/ProductCardSkeleton';
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [, navigate] = useLocation();
   
-  const { products: apiProducts = [], isLoading: productsLoading } = useProducts(50);
-  const { categories, isLoading: categoriesLoading } = useCategories();
+  const { data: apiProducts = [], isLoading: productsLoading, isError: productsError } = useProducts(
+    selectedCategory !== 'all' ? { categoria: selectedCategory } : {}
+  );
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const { addItem } = useCart();
 
-  // Fallback products se API não retornar dados
-  const products = apiProducts.length > 0 ? apiProducts : [
-    {
-      id: 1,
-      name: 'Cordas Premium Nylon',
-      category: 'accessories',
-      price: 89.90,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/accessories-collection-VA8J7JrzAhoFDCr4MERFJi.webp',
-      description: 'Jogo completo de cordas de nylon de alta qualidade',
-      featured: true
-    },
-    {
-      id: 2,
-      name: 'Correia de Couro Artesanal',
-      category: 'accessories',
-      price: 149.90,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/materials-detail-CCoKXjY6bpfty3TMbAQMAK.webp',
-      description: 'Correia de couro legítimo com acabamento manual',
-      featured: true
-    },
-    {
-      id: 3,
-      name: 'Ponte de Madeira Maciça',
-      category: 'accessories',
-      price: 79.90,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/accessories-collection-VA8J7JrzAhoFDCr4MERFJi.webp',
-      description: 'Ponte esculpida em madeira de primeira qualidade',
-      featured: true
-    },
-    {
-      id: 4,
-      name: 'Cravijas de Latão Polido',
-      category: 'accessories',
-      price: 199.90,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/materials-detail-CCoKXjY6bpfty3TMbAQMAK.webp',
-      description: 'Jogo de 5 cravijas de latão polido com acabamento premium',
-      featured: true
-    },
-    {
-      id: 5,
-      name: 'Banjo Clássico Walnut',
-      category: 'banjos',
-      price: 2890.00,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/custom-order-showcase-GBynxkWxfAa5rQEtaDBitT.webp',
-      description: 'Banjo artesanal sob encomenda em madeira de nogueira',
-      featured: false
-    },
-    {
-      id: 6,
-      name: 'Banjo Maple Claro',
-      category: 'banjos',
-      price: 2890.00,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/custom-order-showcase-GBynxkWxfAa5rQEtaDBitT.webp',
-      description: 'Banjo artesanal sob encomenda em madeira de bordo',
-      featured: false
-    }
+  // Fallback products when Supabase has no data yet
+  const fallbackProducts = [
+    { id: 'f1', nome: 'Cordas Premium Nylon', category: 'accessories', preco: 89.90, image_url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/accessories-collection-VA8J7JrzAhoFDCr4MERFJi.webp', descricao: 'Jogo completo de cordas de nylon de alta qualidade', featured: true },
+    { id: 'f2', nome: 'Correia de Couro Artesanal', category: 'accessories', preco: 149.90, image_url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/materials-detail-CCoKXjY6bpfty3TMbAQMAK.webp', descricao: 'Correia de couro legítimo com acabamento manual', featured: true },
+    { id: 'f3', nome: 'Ponte de Madeira Maciça', category: 'accessories', preco: 79.90, image_url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/accessories-collection-VA8J7JrzAhoFDCr4MERFJi.webp', descricao: 'Ponte esculpida em madeira de primeira qualidade', featured: true },
+    { id: 'f4', nome: 'Cravijas de Latão Polido', category: 'accessories', preco: 199.90, image_url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/materials-detail-CCoKXjY6bpfty3TMbAQMAK.webp', descricao: 'Jogo de 5 cravijas de latão polido com acabamento premium', featured: true },
+    { id: 'f5', nome: 'Banjo Clássico Walnut', category: 'banjos', preco: 2890.00, image_url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/custom-order-showcase-GBynxkWxfAa5rQEtaDBitT.webp', descricao: 'Banjo artesanal sob encomenda em madeira de nogueira', featured: false },
+    { id: 'f6', nome: 'Banjo Maple Claro', category: 'banjos', preco: 2890.00, image_url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/custom-order-showcase-GBynxkWxfAa5rQEtaDBitT.webp', descricao: 'Banjo artesanal sob encomenda em madeira de bordo', featured: false },
   ];
 
-  const filteredProducts = selectedCategory === 'all' 
-    ? products 
-    : products.filter((p: any) => p.categoryId === parseInt(selectedCategory) || selectedCategory === 'all');
+  const products = apiProducts.length > 0 ? apiProducts : fallbackProducts;
+
+  // Normalise so UI always reads the same fields
+  const normalizedProducts = products.map((p: any) => ({
+    id: String(p.id),
+    name: p.name ?? p.nome ?? '',
+    description: p.description ?? p.descricao ?? '',
+    price: p.price ?? p.preco ?? 0,
+    image_url: p.image_url ?? p.image ?? p.imagens?.[0] ?? null,
+    featured: p.featured ?? false,
+    is_custom_order: p.is_custom_order ?? false,
+    category: p.categories?.slug ?? p.categorias?.slug ?? p.category ?? '',
+  }));
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -193,9 +159,9 @@ export default function Home() {
               Todos
             </button>
             <button
-              onClick={() => setSelectedCategory('accessories')}
+              onClick={() => setSelectedCategory('acessorios')}
               className={`px-6 py-2 rounded-full font-medium transition-all ${
-                selectedCategory === 'accessories'
+                selectedCategory === 'acessorios'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-foreground hover:bg-primary/10'
               }`}
@@ -215,53 +181,61 @@ export default function Home() {
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            {filteredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-                <Link href={`/product/${product.id}`}>
-                  <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-secondary cursor-pointer">
-                    <img
-                      src={product.image || ''}
-                      alt={product.name || ''}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  {product.featured && (
-                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-accent text-accent-foreground px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
-                      Destaque
+          {productsLoading ? (
+            <ProductGridSkeleton />
+          ) : productsError ? (
+            <div className="text-center text-destructive py-12">
+              <AlertCircle className="w-12 h-12 mx-auto mb-4" />
+              <h3 className="text-xl font-bold">Erro ao carregar produtos</h3>
+              <p>Por favor, tente novamente mais tarde.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+              {normalizedProducts.map((product) => (
+                <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
+                  <Link href={`/product/${product.id}`}>
+                    <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden bg-secondary cursor-pointer">
+                      <img
+                        src={product.image_url || ''}
+                        alt={product.name || ''}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      {product.featured && (
+                        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-accent text-accent-foreground px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
+                          Destaque
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </Link>
-              <div className="p-4 sm:p-6">
-                  <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
-                    {(product as any).category === 'accessories' || (product as any).isCustomOrder === 0 ? 'Acessório' : 'Banjo'}
-                  </p>
+                  </Link>
+                  <div className="p-4 sm:p-6">
+                    <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-2">
+                      {product.category === 'accessories' || !product.is_custom_order ? 'Acessório' : 'Banjo'}
+                    </p>
                     <Link href={`/product/${product.id}`}>
                       <h3 className="font-display font-semibold text-base sm:text-lg text-foreground mb-2 cursor-pointer hover:text-primary transition-colors">
                         {product.name}
                       </h3>
                     </Link>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-                    {product.description}
-                  </p>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xl sm:text-2xl font-bold text-primary">
-                      R$ {typeof product.price === 'string' ? parseFloat(product.price).toFixed(2) : (product.price as number).toFixed(2)}
-                    </span>
-                    <Button 
-                      size="sm" 
-                      className="bg-primary hover:bg-primary/90 text-xs sm:text-sm"
-                      onClick={() => {
-                        addItem(product.id, 1);
-                      }}
-                    >
-                      Adicionar
-                    </Button>
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-4 line-clamp-2">
+                      {product.description}
+                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xl sm:text-2xl font-bold text-primary">
+                        R$ {Number(product.price).toFixed(2)}
+                      </span>
+                      <Button 
+                        size="sm" 
+                        className="bg-primary hover:bg-primary/90 text-xs sm:text-sm"
+                        onClick={() => addItem(product.id, 1)}
+                      >
+                        Adicionar
+                      </Button>
                     </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
