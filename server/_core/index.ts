@@ -9,6 +9,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { paymentRoutes, paymentWebhookHandler } from "../routes/payments";
 import { orderRoutes } from "../routes/orders";
+import { adminRoutes } from "../routes/admin";
+import { customOrdersRoutes } from "../routes/customOrders";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -46,6 +48,8 @@ async function startServer() {
   // REST APIs
   app.use("/api/payments", paymentRoutes);
   app.use("/api/orders", orderRoutes);
+  app.use("/api/admin", adminRoutes);
+  app.use("/api/custom-orders", customOrdersRoutes);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API

@@ -13,49 +13,55 @@ import {
   Wand2
 } from 'lucide-react';
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export default function ProductsPage() {
+  const queryClient = useQueryClient();
   const [showNewProduct, setShowNewProduct] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  
+  // State for forms
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'Acessório',
+    price: '',
+    stock: '',
+    description: '',
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const products = [
-    {
-      id: 1,
-      name: 'Cordas Premium Nylon',
-      category: 'Acessório',
-      price: 89.90,
-      stock: 15,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/accessories-collection-VA8J7JrzAhoFDCr4MERFJi.webp',
-      status: 'Ativo'
-    },
-    {
-      id: 2,
-      name: 'Correia de Couro Artesanal',
-      category: 'Acessório',
-      price: 149.90,
-      stock: 8,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/materials-detail-CCoKXjY6bpfty3TMbAQMAK.webp',
-      status: 'Ativo'
-    },
-    {
-      id: 3,
-      name: 'Ponte de Madeira Maciça',
-      category: 'Acessório',
-      price: 79.90,
-      stock: 12,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/accessories-collection-VA8J7JrzAhoFDCr4MERFJi.webp',
-      status: 'Ativo'
-    },
-    {
-      id: 4,
-      name: 'Banjo Clássico Walnut',
-      category: 'Banjo',
-      price: 2890.00,
-      stock: 0,
-      image: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663431106071/iehPagMtD3SZC9NuGcFbDT/custom-order-showcase-GBynxkWxfAa5rQEtaDBitT.webp',
-      status: 'Sob Encomenda'
-    }
-  ];
+  // Fetch
+  const fetchProducts = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    const res = await fetch('/api/admin/products', {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+    });
+    if (!res.ok) throw new Error('Falha ao carregar produtos');
+    return res.json().then(data => data.products);
+  };
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ['adminProducts'],
+    queryFn: fetchProducts
+  });
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Tem certeza?')) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    await fetch(`/api/admin/products/${id}`, {
+      method: 'DELETE',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+    });
+    toast.success('Produto deletado!');
+    queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+  };
 
   return (
     <AdminLayout
@@ -103,12 +109,16 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
+              {products.map((product: any) => (
                 <tr key={product.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                        {product.image_url || product.image ? (
+                           <img src={product.image_url || product.image} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                           <ImageIcon className="w-full h-full p-3 text-muted-foreground" />
+                        )}
                       </div>
                       <div>
                         <p className="font-semibold text-foreground">{product.name}</p>
@@ -148,7 +158,7 @@ export default function ProductsPage() {
                       <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Editar">
                         <Edit className="w-4 h-4 text-muted-foreground" />
                       </button>
-                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Deletar">
+                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Deletar" onClick={() => handleDelete(product.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </button>
                     </div>
@@ -180,14 +190,29 @@ export default function ProductsPage() {
                 <label className="block text-sm font-semibold text-foreground mb-3">
                   Imagem do Produto
                 </label>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                  <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-foreground font-medium mb-1">
-                    Clique para fazer upload ou arraste a imagem
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    PNG, JPG até 10MB
-                  </p>
+                <div className="relative border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer overflow-hidden">
+                  <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setImageFile(file);
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                  {imagePreview ? (
+                     <img src={imagePreview} className="w-full h-48 object-cover mb-4 rounded-lg" />
+                  ) : (
+                    <>
+                      <ImageIcon className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-foreground font-medium mb-1">
+                        Clique para fazer upload ou arraste a imagem
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG até 10MB
+                      </p>
+                    </>
+                  )}
                   <div className="mt-4 pt-4 border-t border-border">
                     <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
                       <Wand2 className="w-4 h-4" />
@@ -208,6 +233,8 @@ export default function ProductsPage() {
                   </label>
                   <input
                     type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
                     placeholder="Ex: Cordas Premium Nylon"
                     className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -216,7 +243,10 @@ export default function ProductsPage() {
                   <label className="block text-sm font-semibold text-foreground mb-2">
                     Categoria
                   </label>
-                  <select className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                  <select 
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                     <option>Acessório</option>
                     <option>Banjo</option>
                   </select>
@@ -231,6 +261,8 @@ export default function ProductsPage() {
                   </label>
                   <input
                     type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({...formData, price: e.target.value})}
                     placeholder="0.00"
                     className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -241,6 +273,8 @@ export default function ProductsPage() {
                   </label>
                   <input
                     type="number"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({...formData, stock: e.target.value})}
                     placeholder="0"
                     className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -253,12 +287,10 @@ export default function ProductsPage() {
                   <label className="block text-sm font-semibold text-foreground">
                     Descrição
                   </label>
-                  <button className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded text-xs font-medium hover:bg-primary/20 transition-colors">
-                    <Wand2 className="w-3 h-3" />
-                    Sugerir com IA
-                  </button>
                 </div>
                 <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
                   placeholder="Descreva o produto em detalhes..."
                   rows={4}
                   className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
@@ -274,8 +306,48 @@ export default function ProductsPage() {
                 >
                   Cancelar
                 </Button>
-                <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Criar Produto
+                <Button 
+                   className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                   onClick={async () => {
+                     let publicUrl = null;
+                     if (imageFile) {
+                       const filename = `${Date.now()}-${imageFile.name}`;
+                       const { data, error } = await supabase.storage.from('product-images').upload(filename, imageFile);
+                       if (error) { toast.error('Falha no upload da imagem'); return; }
+                       publicUrl = supabase.storage.from('product-images').getPublicUrl(filename).data.publicUrl;
+                     }
+                     const { data: { session } } = await supabase.auth.getSession();
+                     const token = session?.access_token;
+
+                     const res = await fetch('/api/admin/products', {
+                       method: 'POST',
+                       headers: { 
+                         'Content-Type': 'application/json',
+                         ...(token ? { Authorization: `Bearer ${token}` } : {}) 
+                       },
+                       body: JSON.stringify({
+                         name: formData.name,
+                         category: formData.category,
+                         price: parseFloat(formData.price) || 0,
+                         stock: parseInt(formData.stock) || 0,
+                         description: formData.description,
+                         image_url: publicUrl,
+                         imagens: publicUrl ? [publicUrl] : []
+                       })
+                     });
+                     if (res.ok) {
+                         toast.success('Produto salvo!');
+                         queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
+                         setShowNewProduct(false);
+                         setFormData({ name: '', category: 'Corpo', price: '', stock: '', description: '' });
+                         setImageFile(null);
+                         setImagePreview(null);
+                     } else {
+                         toast.error('Erro ao salvar produto');
+                     }
+                   }}
+                >
+                  Salvar Produto
                 </Button>
               </div>
             </div>

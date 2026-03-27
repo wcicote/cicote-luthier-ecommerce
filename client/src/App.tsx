@@ -11,6 +11,8 @@ import Cart from "./pages/Cart";
 import Contact from "./pages/Contact";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ProductsPage from "./pages/admin/Products";
+import AdminOrdersPage from "./pages/admin/Orders";
+import AdminCustomOrdersPage from "./pages/admin/CustomOrders";
 import InventoryPage from "./pages/admin/Inventory";
 import PromotionsPage from "./pages/admin/Promotions";
 import SettingsPage from "./pages/admin/Settings";
@@ -45,6 +47,8 @@ function Router() {
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/admin/products"} component={ProductsPage} />
       <Route path={"/admin/products/new"} component={ProductsPage} />
+      <Route path={"/admin/orders"} component={AdminOrdersPage} />
+      <Route path={"/admin/custom-orders"} component={AdminCustomOrdersPage} />
       <Route path={"/admin/inventory"} component={InventoryPage} />
       <Route path={"/admin/promotions"} component={PromotionsPage} />
       <Route path={"/admin/settings/:tab"} component={SettingsPage} />

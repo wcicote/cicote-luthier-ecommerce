@@ -13,46 +13,50 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export default function PromotionsPage() {
+  const queryClient = useQueryClient();
   const [showNewPromotion, setShowNewPromotion] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    code: '',
+    type: 'percentual',
+    discount: '',
+    startDate: '',
+    endDate: '',
+  });
 
-  const promotions = [
-    {
-      id: 1,
-      name: 'Desconto Primavera',
-      type: 'Porcentagem',
-      discount: '15%',
-      products: 'Todos os acessórios',
-      startDate: '01/03/2026',
-      endDate: '31/03/2026',
-      status: 'Ativo',
-      uses: 24
-    },
-    {
-      id: 2,
-      name: 'Cupom Novo Cliente',
-      type: 'Cupom',
-      discount: 'R$ 50',
-      products: 'Compras acima de R$ 200',
-      startDate: '01/01/2026',
-      endDate: 'Sem data',
-      status: 'Ativo',
-      uses: 156,
-      code: 'BEMVINDO50'
-    },
-    {
-      id: 3,
-      name: 'Black Friday 2025',
-      type: 'Porcentagem',
-      discount: '30%',
-      products: 'Produtos selecionados',
-      startDate: '01/11/2025',
-      endDate: '30/11/2025',
-      status: 'Inativo',
-      uses: 342
-    }
-  ];
+  const fetchPromotions = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    const res = await fetch('/api/admin/promotions', {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+    });
+    if (!res.ok) throw new Error('Falha ao carregar promoções');
+    return res.json().then(data => data.promotions);
+  };
+
+  const { data: promotions = [], isLoading } = useQuery({
+    queryKey: ['adminPromotions'],
+    queryFn: fetchPromotions
+  });
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza?')) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    await fetch(`/api/admin/promotions/${id}`, {
+      method: 'DELETE',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+    });
+    toast.success('Promoção deletada!');
+    queryClient.invalidateQueries({ queryKey: ['adminPromotions'] });
+  };
 
   return (
     <AdminLayout
@@ -63,11 +67,11 @@ export default function PromotionsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="p-6">
           <p className="text-muted-foreground text-sm mb-2">Promoções Ativas</p>
-          <p className="font-display font-bold text-3xl text-foreground">2</p>
+          <p className="font-display font-bold text-3xl text-foreground">{promotions.filter((p: any) => p.ativo).length}</p>
         </Card>
         <Card className="p-6">
           <p className="text-muted-foreground text-sm mb-2">Cupons Utilizados</p>
-          <p className="font-display font-bold text-3xl text-foreground">180</p>
+          <p className="font-display font-bold text-3xl text-foreground">{promotions.reduce((acc: number, p: any) => acc + (p.usos_atuais || 0), 0)}</p>
         </Card>
         <Card className="p-6">
           <p className="text-muted-foreground text-sm mb-2">Desconto Total</p>
@@ -107,55 +111,54 @@ export default function PromotionsPage() {
               </tr>
             </thead>
             <tbody>
-              {promotions.map((promo) => (
+              {isLoading ? (
+                  <tr><td colSpan={7} className="text-center py-4">Carregando...</td></tr>
+              ) : promotions.map((promo: any) => (
                 <tr key={promo.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-semibold text-foreground">{promo.name}</p>
-                      <p className="text-xs text-muted-foreground">{promo.products}</p>
+                      <p className="font-semibold text-foreground">{promo.descricao || "Sem Nome"}</p>
+                      <p className="text-xs text-muted-foreground">Código: {promo.codigo}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-foreground">{promo.type}</span>
+                    <span className="text-sm text-foreground">{promo.tipo_desconto === 'percentual' ? 'Porcentagem' : 'R$'}</span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <Percent className="w-4 h-4 text-primary" />
-                      <span className="font-semibold text-foreground">{promo.discount}</span>
+                      {promo.tipo_desconto === 'percentual' && <Percent className="w-4 h-4 text-primary" />}
+                      <span className="font-semibold text-foreground">{promo.tipo_desconto === 'fixo' ? 'R$ ' : ''}{promo.valor_desconto}{promo.tipo_desconto === 'percentual' ? '%' : ''}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 text-sm text-foreground">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>{promo.startDate} - {promo.endDate}</span>
+                      <span>{new Date(promo.data_inicio).toLocaleDateString()} - {promo.data_fim ? new Date(promo.data_fim).toLocaleDateString() : 'Sem fim'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      promo.status === 'Ativo'
+                      promo.ativo
                         ? 'bg-green-100 text-green-700'
                         : 'bg-gray-100 text-gray-700'
                     }`}>
-                      {promo.status}
+                      {promo.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-semibold text-foreground">{promo.uses}</span>
+                    <span className="text-sm font-semibold text-foreground">{promo.usos_atuais || 0}</span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      {promo.code && (
-                        <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Copiar código">
+                      {promo.codigo && (
+                        <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Copiar código" onClick={() => {
+                          navigator.clipboard.writeText(promo.codigo);
+                          toast.success('Código copiado!');
+                        }}>
                           <Copy className="w-4 h-4 text-muted-foreground" />
                         </button>
                       )}
-                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Visualizar">
-                        <Eye className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Editar">
-                        <Edit className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Deletar">
+                      <button className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Deletar" onClick={() => handleDelete(promo.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </button>
                     </div>
@@ -202,11 +205,24 @@ export default function PromotionsPage() {
               {/* Basic Info */}
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-2">
-                  Nome da Promoção
+                  Nome (Descrição) da Promoção
                 </label>
                 <input
                   type="text"
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
                   placeholder="Ex: Desconto Primavera"
+                  className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary mb-4"
+                />
+                
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Código do Cupom
+                </label>
+                <input
+                  type="text"
+                  value={formData.code}
+                  onChange={e => setFormData({...formData, code: e.target.value})}
+                  placeholder="Ex: PRIMAVERA15"
                   className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -219,12 +235,17 @@ export default function PromotionsPage() {
                 <div className="flex gap-2">
                   <input
                     type="number"
+                    value={formData.discount}
+                    onChange={e => setFormData({...formData, discount: e.target.value})}
                     placeholder="15"
                     className="flex-1 px-4 py-2 bg-secondary border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  <select className="px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option>%</option>
-                    <option>R$</option>
+                  <select 
+                    value={formData.type}
+                    onChange={e => setFormData({...formData, type: e.target.value})}
+                    className="px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                    <option value="percentual">%</option>
+                    <option value="fixo">R$</option>
                   </select>
                 </div>
               </div>
@@ -237,6 +258,8 @@ export default function PromotionsPage() {
                   </label>
                   <input
                     type="date"
+                    value={formData.startDate}
+                    onChange={e => setFormData({...formData, startDate: e.target.value})}
                     className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -246,6 +269,8 @@ export default function PromotionsPage() {
                   </label>
                   <input
                     type="date"
+                    value={formData.endDate}
+                    onChange={e => setFormData({...formData, endDate: e.target.value})}
                     className="w-full px-4 py-2 bg-secondary border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
@@ -273,7 +298,37 @@ export default function PromotionsPage() {
                 >
                   Cancelar
                 </Button>
-                <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button 
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={async () => {
+                     const { data: { session } } = await supabase.auth.getSession();
+                     const token = session?.access_token;
+
+                     const res = await fetch('/api/admin/promotions', {
+                       method: 'POST',
+                       headers: { 
+                         'Content-Type': 'application/json',
+                         ...(token ? { Authorization: `Bearer ${token}` } : {}) 
+                       },
+                       body: JSON.stringify({
+                         codigo: formData.code,
+                         descricao: formData.name,
+                         tipo_desconto: formData.type,
+                         valor_desconto: parseFloat(formData.discount) || 0,
+                         data_inicio: formData.startDate ? new Date(formData.startDate).toISOString() : new Date().toISOString(),
+                         data_fim: formData.endDate ? new Date(formData.endDate).toISOString() : null,
+                       })
+                     });
+                     if (res.ok) {
+                         toast.success('Promoção salva!');
+                         queryClient.invalidateQueries({ queryKey: ['adminPromotions'] });
+                         setShowNewPromotion(false);
+                         setFormData({ name: '', code: '', type: 'percentual', discount: '', startDate: '', endDate: '' });
+                     } else {
+                         toast.error('Erro ao salvar promoção');
+                     }
+                  }}
+                >
                   Criar Promoção
                 </Button>
               </div>

@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -21,11 +22,36 @@ export default function Contact() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('/api/custom-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome_cliente: formData.name,
+          email_cliente: formData.email,
+          descricao_encomenda: formData.message,
+          tipo_instrumento: formData.subject === 'custom' ? 'Banjo Personalizado' : formData.subject,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao enviar mensagem');
+      }
+
+      toast.success('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (error) {
+      console.error(error);
+      toast.error('Ocorreu um erro ao enviar sua mensagem. Tente novamente mais tarde.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -162,8 +188,8 @@ export default function Contact() {
                   ></textarea>
                 </div>
 
-                <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Enviar Mensagem
+                <Button type="submit" size="lg" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50">
+                  {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
                   <Send className="w-4 h-4 ml-2" />
                 </Button>
               </form>

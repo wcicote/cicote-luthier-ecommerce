@@ -10,93 +10,79 @@ import {
   ArrowDownRight,
   MoreVertical
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+
+// Recharts
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
-  const stats = [
+  const fetchDashboard = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    const res = await fetch('/api/admin/dashboard', {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+    });
+    if (!res.ok) throw new Error('Falha ao carregar dashboard');
+    return res.json();
+  };
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['adminDashboard'],
+    queryFn: fetchDashboard
+  });
+
+  if (isLoading) return <AdminLayout title="Dashboard" subtitle="Carregando..."><div>Carregando...</div></AdminLayout>;
+
+  // Mapping from our API data
+  const realStats = [
     {
       label: 'Total de Produtos',
-      value: '24',
-      change: '+2',
+      value: data?.produtos_ativos || '0',
+      change: '-',
       icon: Package,
       trend: 'up',
       color: 'bg-blue-100 text-blue-600'
     },
     {
-      label: 'Pedidos Este Mês',
-      value: '12',
-      change: '+5',
+      label: 'Pedidos Hoje',
+      value: data?.pedidos_hoje || '0',
+      change: '-',
       icon: ShoppingCart,
       trend: 'up',
       color: 'bg-green-100 text-green-600'
     },
     {
-      label: 'Receita',
-      value: 'R$ 8.450',
-      change: '+12%',
+      label: 'Receita Total',
+      value: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data?.total_vendas || 0),
+      change: '-',
       icon: TrendingUp,
       trend: 'up',
       color: 'bg-purple-100 text-purple-600'
     },
     {
-      label: 'Visitantes',
-      value: '1.240',
-      change: '-3%',
+      label: 'Visitantes/Clientes',
+      value: data?.clientes_total || '0',
+      change: '-',
       icon: Users,
-      trend: 'down',
+      trend: 'up',
       color: 'bg-orange-100 text-orange-600'
     }
   ];
 
-  const recentProducts = [
-    {
-      id: 1,
-      name: 'Cordas Premium Nylon',
-      category: 'Acessório',
-      price: 89.90,
-      stock: 15,
-      status: 'Ativo'
-    },
-    {
-      id: 2,
-      name: 'Correia de Couro Artesanal',
-      category: 'Acessório',
-      price: 149.90,
-      stock: 8,
-      status: 'Ativo'
-    },
-    {
-      id: 3,
-      name: 'Banjo Clássico Walnut',
-      category: 'Banjo',
-      price: 2890.00,
-      stock: 0,
-      status: 'Sob Encomenda'
-    }
-  ];
+  const recentOrdersRender = data?.recentOrders?.map((o: any) => ({
+    id: o.order_number,
+    customer: o.id.slice(0, 8), // just a mock for customer name until joined
+    amount: new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(o.total_amount),
+    status: o.status,
+    date: new Date(o.created_at).toLocaleDateString()
+  })) || [];
 
-  const recentOrders = [
-    {
-      id: '#ORD-001',
-      customer: 'João Silva',
-      amount: 'R$ 450.00',
-      status: 'Entregue',
-      date: '13/03/2026'
-    },
-    {
-      id: '#ORD-002',
-      customer: 'Maria Santos',
-      amount: 'R$ 1.200.00',
-      status: 'Processando',
-      date: '12/03/2026'
-    },
-    {
-      id: '#ORD-003',
-      customer: 'Pedro Costa',
-      amount: 'R$ 89.90',
-      status: 'Pendente',
-      date: '11/03/2026'
-    }
-  ];
+  const chartData = (data?.recentOrders || []).map((o: any) => ({
+    name: new Date(o.created_at).toLocaleDateString('pt-BR', { weekday: 'short' }),
+    vendas: o.total_amount
+  })).reverse();
 
   return (
     <AdminLayout
@@ -105,7 +91,7 @@ export default function AdminDashboard() {
     >
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => {
+        {realStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <Card key={index} className="p-6">
@@ -144,30 +130,23 @@ export default function AdminDashboard() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-display font-semibold text-lg text-foreground">
-              Produtos Recentes
+              Vendas dos últimos dias
             </h2>
             <a href="/admin/products" className="text-primary hover:text-primary/80 text-sm font-medium">
               Ver Todos
             </a>
           </div>
 
-          <div className="space-y-4">
-            {recentProducts.map((product) => (
-              <div key={product.id} className="flex items-center justify-between p-4 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-foreground mb-1">{product.name}</h4>
-                  <p className="text-xs text-muted-foreground">{product.category}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-foreground">R$ {product.price.toFixed(2)}</p>
-                  <p className={`text-xs font-medium ${
-                    product.stock > 0 ? 'text-green-600' : 'text-orange-600'
-                  }`}>
-                    {product.stock > 0 ? `${product.stock} em estoque` : product.status}
-                  </p>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-4 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="vendas" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </Card>
 
@@ -183,7 +162,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="space-y-4">
-            {recentOrders.map((order) => (
+            {recentOrdersRender.map((order: any) => (
               <div key={order.id} className="flex items-center justify-between p-4 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors">
                 <div className="flex-1">
                   <h4 className="font-semibold text-foreground mb-1">{order.id}</h4>

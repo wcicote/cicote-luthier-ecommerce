@@ -4,6 +4,8 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  ClipboardList,
+  Wrench,
   Tag,
   Settings,
   LogOut,
@@ -35,9 +37,14 @@ export default function AdminSidebar() {
       ]
     },
     {
-      label: 'Estoque',
-      icon: ShoppingCart,
-      href: '/admin/inventory'
+      label: 'Pedidos',
+      icon: ClipboardList,
+      href: '/admin/orders'
+    },
+    {
+      label: 'Encomendas',
+      icon: Wrench,
+      href: '/admin/custom-orders'
     },
     {
       label: 'Promoções',
